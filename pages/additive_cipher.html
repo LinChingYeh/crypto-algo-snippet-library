@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加法密碼 (Additive Cipher)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>加法密碼 (Additive Cipher)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>加法密碼是一種古典的替換式密碼（最著名的特例為凱撒密碼）。它的運作原理是將明文中的每一個英文字母，依照字母表順序向後（或向前）位移固定的位數，這個位移量即為「密鑰 (Key)」。當字母位移超過 Z 時會重新從 A 開始，這在數學上可視為對 26 取模（Modulo 26）的加法運算。解密時，只需加上負的密鑰（等同於 26 減去密鑰）再次取模，即可還原出原本的明文。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>時間複雜度</strong>：O(N) (N 為輸入的字串長度。演算法必須走訪字串中的每一個字元進行模運算，處理時間與字串長度成正比)</li>
+            <li><strong>空間複雜度</strong>：O(1) (由於是直接對傳入的字串進行字元替換，屬於 In-place 修改，除了儲存密鑰等少數變數外，不需要隨著字串長度增加額外的記憶體開銷)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;limits&gt;
+using namespace std;
+
+// 加法式密碼函式
+string additiveCipher(string text, int key, bool decrypt) {
+
+    // 將密鑰限制在 0~25 之間
+    key = ((key % 26) + 26) % 26;
+
+    // 如果是解密，則使用反向位移
+    if (decrypt) {
+        key = (26 - key) % 26;
+    }
+
+    // 逐一處理字串中的字元
+    for (int i = 0; i &lt; text.length(); i++) {
+
+        // 處理大寫英文字母
+        if (text[i] &gt;= 'A' &amp;&amp; text[i] &lt;= 'Z') {
+            text[i] = 'A' + (text[i] - 'A' + key) % 26;
+        }
+
+        // 處理小寫英文字母
+        else if (text[i] &gt;= 'a' &amp;&amp; text[i] &lt;= 'z') {
+            text[i] = 'a' + (text[i] - 'a' + key) % 26;
+        }
+    }
+
+    return text;
+}
+
+int main() {
+    int choice, key;
+    string text;
+
+    cout &lt;&lt; "===== Additive Cipher =====" &lt;&lt; endl;
+    cout &lt;&lt; "1. Encryption" &lt;&lt; endl;
+    cout &lt;&lt; "2. Decryption" &lt;&lt; endl;
+
+    cout &lt;&lt; "Choose an option: ";
+    cin &gt;&gt; choice;
+
+    cout &lt;&lt; "Enter the key: ";
+    cin &gt;&gt; key;
+
+    // 清除輸入緩衝區
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max(), '\n');
+
+    cout &lt;&lt; "Enter text: ";
+    getline(cin, text);
+
+    // 執行加密或解密
+    if (choice == 1) {
+        cout &lt;&lt; "Encrypted result: "
+             &lt;&lt; additiveCipher(text, key, false) &lt;&lt; endl;
+    }
+    else if (choice == 2) {
+        cout &lt;&lt; "Decrypted result: "
+             &lt;&lt; additiveCipher(text, key, true) &lt;&lt; endl;
+    }
+    else {
+        cout &lt;&lt; "Invalid option!" &lt;&lt; endl;
+    }
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            ===== Additive Cipher =====<br>
+            1. Encryption<br>
+            2. Decryption<br>
+            Choose an option: 1<br>
+            Enter the key: 3<br>
+            Enter text: Hello World!<br>
+            Encrypted result: Khoor Zruog!
+        </div>
+    </section>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+/* style.css */
+:root {
+    --bg-color: #121212;
+    --text-color: #e0e0e0;
+    --accent-color: #00ffcc;
+    --card-bg: #1e1e1e;
+    --code-bg: #2d2d2d;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    max-width: 1000px; /* 為了左右並排，稍微把網頁最大寬度拉寬一點 */
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+h1, h2, h3 {
+    color: var(--accent-color);
+}
+
+a {
+    color: var(--text-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+    a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+    }
+
+/* 核心排版：左右並排設定 */
+main {
+    display: flex;
+    gap: 25px; /* 兩個區塊之間的間距 */
+    flex-wrap: wrap; /* 如果螢幕太窄(如手機)，自動變成上下排列 */
+}
+
+/* 分類卡片設計 */
+.category {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    flex: 1; /* 讓兩個區塊平分寬度 */
+    min-width: 300px;
+}
+
+    .category ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .category li {
+        margin-bottom: 12px;
+        font-size: 1.05em;
+    }
+
+        .category li::before {
+            content: "➔ ";
+            color: var(--accent-color);
+            margin-right: 8px;
+        }
+
+/* 次分類標題設計 (密碼學數學 / 加解密方法) */
+.sub-category-title {
+    color: #aaa;
+    font-size: 1.1em;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
+.update-status {
+    color: #888;
+    font-style: italic;
+    font-size: 0.9em;
+    margin-top: 20px;
+    text-align: right;
+}
+
+/* 筆記內頁的程式碼與輸出區塊樣式 */
+pre {
+    background-color: var(--code-bg);
+    padding: 15px;
+    border-radius: 5px;
+    overflow-x: auto;
+    border-left: 4px solid var(--accent-color);
+}
+
+code {
+    font-family: 'Consolas', 'Courier New', Courier, monospace;
+    font-size: 0.95em;
+}
+
+.output {
+    background-color: #000000;
+    color: #00ff00;
+    padding: 15px;
+    border-radius: 5px;
+    font-family: 'Consolas', 'Courier New', Courier, monospace;
+    margin-top: 15px;
+    border: 1px solid #333;
+}

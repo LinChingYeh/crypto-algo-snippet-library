@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>擴展歐幾里得演算法 (Extended Euclidean Algorithm)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>擴展歐幾里得演算法 (Extended Euclidean Algorithm)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>擴展歐幾里得演算法不僅能像標準歐幾里得演算法一樣求出兩個整數 a 和 m 的最大公因數 (GCD)，還能同時找到滿足「貝祖等式 (Bezout's identity)」的整數係數 s 和 t，使得 a * s + m * t = GCD(a, m)。在密碼學中，當這兩個數互質，即 GCD(a, m) = 1 時，係數 s (經過對 m 取模正規化後) 就是 a 在模 m 之下的「乘法反元素 (Multiplicative Inverse)」。這在 RSA 等公鑰密碼體系中，是產生私鑰或進行模逆運算時極為核心的數學工具。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>最佳時間複雜度</strong>：O(1) (當其中一個數為 0 或 m 為 a 的倍數時，可直接返回結果)</li>
+            <li><strong>平均時間複雜度</strong>：O(log(min(a, m))) (隨著數字在遞迴取模中迅速減小，步數呈對數級成長)</li>
+            <li><strong>最壞時間複雜度</strong>：O(log(min(a, m))) (當輸入的兩個數字為相鄰的費氏數列時，所需計算的步驟最多)</li>
+            <li><strong>空間複雜度</strong>：O(log(min(a, m))) (由於採用遞迴呼叫，會消耗對應遞迴深度的系統呼叫堆疊空間)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+// 擴展歐幾里得演算法
+long long extendedGCD(long long a, long long b,
+                      long long &amp;s, long long &amp;t) {
+
+    // 終止條件
+    if (b == 0) {
+        s = (a &gt;= 0) ? 1 : -1;
+        t = 0;
+        return (a &gt;= 0) ? a : -a;
+    }
+
+    long long s1, t1;
+
+    // 遞迴呼叫
+    long long gcd = extendedGCD(b, a % b, s1, t1);
+
+    // 計算 s 和 t
+    s = t1;
+    t = s1 - (a / b) * t1;
+
+    return gcd;
+}
+
+int main() {
+    long long a, m;
+    long long s, t;
+
+    cout &lt;&lt; "Enter integer a: ";
+    cin &gt;&gt; a;
+
+    cout &lt;&lt; "Enter modulus m (m &gt; 1): ";
+    cin &gt;&gt; m;
+
+    // 檢查模數是否有效
+    if (m &lt;= 1) {
+        cout &lt;&lt; "Error: modulus must be greater than 1!" &lt;&lt; endl;
+        return 0;
+    }
+
+    // 執行擴展歐幾里得演算法
+    long long gcd = extendedGCD(a, m, s, t);
+
+    // 輸出最大公因數
+    cout &lt;&lt; "\nGreatest Common Divisor GCD = " &lt;&lt; gcd &lt;&lt; endl;
+
+    // 輸出 s 和 t
+    cout &lt;&lt; "s = " &lt;&lt; s &lt;&lt; endl;
+    cout &lt;&lt; "t = " &lt;&lt; t &lt;&lt; endl;
+
+    // 輸出貝祖等式
+    cout &lt;&lt; "\nBezout's identity:" &lt;&lt; endl;
+    cout &lt;&lt; a &lt;&lt; " * (" &lt;&lt; s &lt;&lt; ") + "
+         &lt;&lt; m &lt;&lt; " * (" &lt;&lt; t &lt;&lt; ") = "
+         &lt;&lt; gcd &lt;&lt; endl;
+
+    // 判斷是否存在乘法反元素
+    if (gcd == 1) {
+
+        // 將 s 正規化至 0 ~ m-1
+        long long inverse = (s % m + m) % m;
+
+        cout &lt;&lt; "\nMultiplicative Inverse:" &lt;&lt; endl;
+        cout &lt;&lt; a &lt;&lt; " mod " &lt;&lt; m
+             &lt;&lt; " inverse = "
+             &lt;&lt; inverse &lt;&lt; endl;
+    }
+    else {
+        cout &lt;&lt; "\nMultiplicative inverse does not exist!" &lt;&lt; endl;
+        cout &lt;&lt; "Because GCD(a, m) is not equal to 1." &lt;&lt; endl;
+    }
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            Enter integer a: 3<br>
+            Enter modulus m (m &gt; 1): 11<br>
+            <br>
+            Greatest Common Divisor GCD = 1<br>
+            s = 4<br>
+            t = -1<br>
+            <br>
+            Bezout's identity:<br>
+            3 * (4) + 11 * (-1) = 1<br>
+            <br>
+            Multiplicative Inverse:<br>
+            3 mod 11 inverse = 4
+        </div>
+    </section>
+
+</body>
+</html>

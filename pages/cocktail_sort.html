@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雞尾酒排序演算法 (Cocktail Sort)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>雞尾酒排序演算法 (Cocktail Sort)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>雞尾酒排序（又稱雙向氣泡排序）是氣泡排序的一種變形。一般的氣泡排序每次都是單向地從左到右比較並將最大值推向右端，這會導致數列尾端的較小數字需要經過非常多次的輪替才能慢慢「爬」回前端（稱為烏龜現象）。雞尾酒排序透過交替進行「由左至右」與「由右至左」的雙向比較，能在每一輪同時將最大值推向右端，並將最小值推向左端，藉此改善氣泡排序在特定極端情況下的效能。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>最佳時間複雜度</strong>：O(n) (當數列已經是排序狀態時，只需走訪一輪即可提早結束)</li>
+            <li><strong>平均時間複雜度</strong>：O(n^2) (一般隨機排列的情況)</li>
+            <li><strong>最壞時間複雜度</strong>：O(n^2) (當數列為完全反序時)</li>
+            <li><strong>空間複雜度</strong>：O(1) (為 In-place 排序，僅需常數等級的額外空間)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+// 雞尾酒排序函式
+void cocktailSort(vector&lt;int&gt;&amp; arr) {
+    int n = arr.size();
+
+    // 設定尚未排序的左右邊界
+    int left = 0;
+    int right = n - 1;
+
+    // 控制是否發生交換
+    bool swapped = true;
+
+    while (swapped) {
+        swapped = false;
+
+        // 第一階段：由左向右比較
+        for (int i = left; i &lt; right; i++) {
+            // 如果左邊的數字大於右邊，就交換位置
+            if (arr[i] &gt; arr[i + 1]) {
+                swap(arr[i], arr[i + 1]);
+                swapped = true;
+            }
+        }
+
+        // 如果沒有發生交換，代表排序已完成
+        if (swapped == false) {
+            break;
+        }
+
+        // 右邊界往左縮小
+        right--;
+
+        swapped = false;
+
+        // 第二階段：由右向左比較
+        for (int i = right; i &gt; left; i--) {
+            // 如果右邊的數字小於左邊，就交換位置
+            if (arr[i] &lt; arr[i - 1]) {
+                swap(arr[i], arr[i - 1]);
+                swapped = true;
+            }
+        }
+
+        // 左邊界往右縮小
+        left++;
+    }
+}
+
+int main() {
+    int n;
+
+    cout &lt;&lt; "Enter the number of elements: ";
+    cin &gt;&gt; n;
+
+    vector&lt;int&gt; arr(n);
+
+    cout &lt;&lt; "Enter " &lt;&lt; n &lt;&lt; " integers: ";
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; arr[i];
+    }
+
+    // 執行雞尾酒排序
+    cocktailSort(arr);
+
+    // 輸出排序結果
+    cout &lt;&lt; "Sorted result: ";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i] &lt;&lt; " ";
+    }
+
+    cout &lt;&lt; endl;
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            Enter the number of elements: 6<br>
+            Enter 6 integers: 5 1 4 2 8 0<br>
+            Sorted result: 0 1 2 4 5 8
+        </div>
+    </section>
+
+</body>
+</html>

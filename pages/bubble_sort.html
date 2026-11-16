@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>氣泡排序演算法 (Bubble Sort)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄 (Back to Home)</a>
+
+    <h1>氣泡排序演算法 (Bubble Sort)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>氣泡排序是一種簡單且直觀的排序演算法。它的運作方式是重複地走訪過要排序的數列，每次比較相鄰的兩個元素。如果這兩個元素的順序錯誤（例如前一個大於後一個），就將它們交換位置。這個走訪的過程會持續重複，直到整個數列中沒有任何需要交換的元素為止。因為在排序的過程中，較大的元素會像水底的氣泡一樣，逐次「浮」到數列的頂端，因此得名氣泡排序。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>最佳時間複雜度</strong>：O(n) (當數列已經是排序狀態時)</li>
+            <li><strong>平均時間複雜度</strong>：O(n^2) (一般隨機排列的情況)</li>
+            <li><strong>最壞時間複雜度</strong>：O(n^2) (當數列為完全反序時)</li>
+            <li><strong>空間複雜度</strong>：O(1) (為 In-place 排序，只需額外常數空間)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+// 氣泡排序函式
+void bubbleSort(vector&lt;int&gt;&amp; arr) {
+    int n = arr.size();
+
+    // 控制排序輪數
+    for (int i = 0; i &lt; n - 1; i++) {
+        bool swapped = false;
+
+        // 比較相鄰的兩個元素
+        for (int j = 0; j &lt; n - i - 1; j++) {
+            // 如果左邊的數字大於右邊，就交換位置
+            if (arr[j] &gt; arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+                swapped = true;
+            }
+        }
+
+        // 如果這一輪沒有發生交換，代表排序已完成
+        if (swapped == false) {
+            break;
+        }
+    }
+}
+
+int main() {
+    int n;
+
+    cout &lt;&lt; "Enter the number of elements: ";
+    cin &gt;&gt; n;
+
+    vector&lt;int&gt; arr(n);
+
+    cout &lt;&lt; "Enter " &lt;&lt; n &lt;&lt; " integers: ";
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; arr[i];
+    }
+
+    // 執行氣泡排序
+    bubbleSort(arr);
+
+    // 輸出排序結果
+    cout &lt;&lt; "Sorted result: ";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i] &lt;&lt; " ";
+    }
+
+    cout &lt;&lt; endl;
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            Enter the number of elements: 5<br>
+            Enter 5 integers: 64 34 25 12 22<br>
+            Sorted result: 12 22 25 34 64
+        </div>
+    </section>
+
+</body>
+</html>
