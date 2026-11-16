@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>普萊費爾密碼 (Playfair Cipher)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>普萊費爾密碼 (Playfair Cipher)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>普萊費爾密碼是一種多字母替換密碼。它的加密核心是一個基於初始密鑰 (Keyword) 建立的 5x5 矩陣，包含 25 個大寫英文字母（通常將 I 和 J 視為同一個字母）。加密前，明文會被整理並每兩個字母分為一組，若同組字母相同則會插入填充字母（如 X 或 Q）。加密時，根據這兩個字母在矩陣中的相對位置（同一列、同一行、或形成矩形的對角），套用特定的位移或交換規則來產生密文對。這種一次處理一對字母的特性，使得普萊費爾密碼能有效抵抗單一字母的頻率分析攻擊。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>時間複雜度</strong>：O(N) (N 為輸入字串的長度。建立 5x5 矩陣的時間為 O(1) 常數時間；加密與解密時，需將字串分為兩兩一組進行矩陣位置查找與替換，處理時間與字串長度成正比)</li>
+            <li><strong>空間複雜度</strong>：O(1) (除了固定大小的 5x5 矩陣與記錄字母座標的陣列外，直接對處理後的字串進行運算，不需配置隨字串長度無限增長的額外記憶體)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;cctype&gt;
+#include &lt;limits&gt;
+using namespace std;
+
+// 將文字轉換成大寫，並將 J 替換成 I
+string normalizeText(string text) {
+    string result;
+
+    for (unsigned char ch : text) {
+        if (isalpha(ch)) {
+            char c = toupper(ch);
+
+            if (c == 'J') {
+                c = 'I';
+            }
+
+            result += c;
+        }
+    }
+
+    return result;
+}
+
+// 建立 5x5 密鑰矩陣
+void createMatrix(string keyword, char matrix[5][5],
+                  int row[26], int col[26]) {
+
+    bool used[26] = {false};
+    string key = normalizeText(keyword);
+    string alphabet = key;
+
+    // 將剩餘未使用的字母加入矩陣
+    for (char c = 'A'; c &lt;= 'Z'; c++) {
+        if (c != 'J') {
+            alphabet += c;
+        }
+    }
+
+    int index = 0;
+
+    // 填入 5x5 矩陣，忽略重複字母
+    for (char c : alphabet) {
+
+        if (!used[c - 'A']) {
+            used[c - 'A'] = true;
+
+            matrix[index / 5][index % 5] = c;
+
+            // 記錄每個字母的位置
+            row[c - 'A'] = index / 5;
+            col[c - 'A'] = index % 5;
+
+            index++;
+        }
+    }
+
+    // J 與 I 共用同一個位置
+    row['J' - 'A'] = row['I' - 'A'];
+    col['J' - 'A'] = col['I' - 'A'];
+}
+
+// 顯示密鑰矩陣
+void printMatrix(char matrix[5][5]) {
+    cout &lt;&lt; "\nKey Matrix:" &lt;&lt; endl;
+
+    for (int i = 0; i &lt; 5; i++) {
+        for (int j = 0; j &lt; 5; j++) {
+            cout &lt;&lt; matrix[i][j] &lt;&lt; " ";
+        }
+        cout &lt;&lt; endl;
+    }
+}
+
+// 加密前整理明文，每兩個字母分成一組
+string preparePlaintext(string text) {
+    string result;
+    int i = 0;
+
+    while (i &lt; text.length()) {
+
+        char first = text[i];
+        char second;
+
+        // 如果下一個字母存在且不相同，就組成一對
+        if (i + 1 &lt; text.length() &amp;&amp;
+            text[i] != text[i + 1]) {
+
+            second = text[i + 1];
+            i += 2;
+        }
+        else {
+            // 如果兩個字母相同，插入填充字母
+            second = (first == 'X') ? 'Q' : 'X';
+            i++;
+        }
+
+        result += first;
+        result += second;
+    }
+
+    return result;
+}
+
+// Playfair Cipher 加密與解密函式
+string playfairCipher(string text, char matrix[5][5],
+                      int row[26], int col[26],
+                      bool decrypt) {
+
+    string result;
+
+    // 每次處理兩個字母
+    for (int i = 0; i &lt; text.length(); i += 2) {
+
+        char a = text[i];
+        char b = text[i + 1];
+
+        int r1 = row[a - 'A'];
+        int c1 = col[a - 'A'];
+
+        int r2 = row[b - 'A'];
+        int c2 = col[b - 'A'];
+
+        // 規則一：同一列
+        if (r1 == r2) {
+
+            if (decrypt) {
+                c1 = (c1 + 4) % 5;
+                c2 = (c2 + 4) % 5;
+            }
+            else {
+                c1 = (c1 + 1) % 5;
+                c2 = (c2 + 1) % 5;
+            }
+        }
+
+        // 規則二：同一行
+        else if (c1 == c2) {
+
+            if (decrypt) {
+                r1 = (r1 + 4) % 5;
+                r2 = (r2 + 4) % 5;
+            }
+            else {
+                r1 = (r1 + 1) % 5;
+                r2 = (r2 + 1) % 5;
+            }
+        }
+
+        // 規則三：形成矩形
+        else {
+            int temp = c1;
+            c1 = c2;
+            c2 = temp;
+        }
+
+        // 取得加密或解密後的字母
+        result += matrix[r1][c1];
+        result += matrix[r2][c2];
+    }
+
+    return result;
+}
+
+int main() {
+    int choice;
+    string keyword;
+    string text;
+
+    char matrix[5][5];
+    int row[26] = {0};
+    int col[26] = {0};
+
+    cout &lt;&lt; "===== Playfair Cipher =====" &lt;&lt; endl;
+    cout &lt;&lt; "1. Encryption" &lt;&lt; endl;
+    cout &lt;&lt; "2. Decryption" &lt;&lt; endl;
+
+    cout &lt;&lt; "Choose an option: ";
+    cin &gt;&gt; choice;
+
+    // 檢查選項
+    if (choice != 1 &amp;&amp; choice != 2) {
+        cout &lt;&lt; "Invalid option!" &lt;&lt; endl;
+        return 0;
+    }
+
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max(), '\n');
+
+    // 輸入密鑰
+    cout &lt;&lt; "Enter Keyword: ";
+    getline(cin, keyword);
+
+    // 檢查密鑰是否包含英文字母
+    if (normalizeText(keyword).empty()) {
+        cout &lt;&lt; "Error: Keyword must contain at least one letter!" &lt;&lt; endl;
+        return 0;
+    }
+
+    // 建立密鑰矩陣
+    createMatrix(keyword, matrix, row, col);
+
+    // 顯示密鑰矩陣
+    printMatrix(matrix);
+
+    // 輸入明文或密文
+    cout &lt;&lt; "\nEnter text: ";
+    getline(cin, text);
+
+    // 移除空格、數字及特殊符號，並轉換成大寫
+    text = normalizeText(text);
+
+    if (text.empty()) {
+        cout &lt;&lt; "Error: Please enter at least one letter!" &lt;&lt; endl;
+        return 0;
+    }
+
+    // 執行加密
+    if (choice == 1) {
+
+        // 整理明文並分組
+        text = preparePlaintext(text);
+
+        cout &lt;&lt; "\nPrepared Plaintext: " &lt;&lt; text &lt;&lt; endl;
+
+        cout &lt;&lt; "Encrypted result: "
+             &lt;&lt; playfairCipher(text, matrix, row, col, false)
+             &lt;&lt; endl;
+    }
+
+    // 執行解密
+    else {
+
+        // 密文長度必須是偶數
+        if (text.length() % 2 != 0) {
+            cout &lt;&lt; "Error: Ciphertext length must be an even number!"
+                 &lt;&lt; endl;
+            return 0;
+        }
+
+        cout &lt;&lt; "\nDecrypted result: "
+             &lt;&lt; playfairCipher(text, matrix, row, col, true)
+             &lt;&lt; endl;
+    }
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            ===== Playfair Cipher =====<br>
+            1. Encryption<br>
+            2. Decryption<br>
+            Choose an option: 1<br>
+            Enter Keyword: MONARCHY<br>
+            <br>
+            Key Matrix:<br>
+            M O N A R <br>
+            C H Y B D <br>
+            E F G I K <br>
+            L P Q S T <br>
+            U V W X Z <br>
+            <br>
+            Enter text: ATTACK AT DAWN<br>
+            <br>
+            Prepared Plaintext: ATTACTKATDAWNQ<br>
+            Encrypted result: RSSRDEKSTBUMZY
+        </div>
+    </section>
+
+</body>
+</html>

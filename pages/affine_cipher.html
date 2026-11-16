@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仿射密碼 (Affine Cipher)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>仿射密碼 (Affine Cipher)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>仿射密碼是一種單表替換密碼，結合了乘法密碼與加法密碼的特性。加密時，每個字母先被轉換為 0 到 25 的數字，接著套用線性函數 C = (a * P + b) mod 26，其中 a 和 b 為密鑰。為了確保解密時每個字母對應唯一的值，密鑰 a 必須與 26 互質（即 GCD(a, 26) = 1），如此一來 a 才會有乘法反元素。解密時，則使用公式 P = a^(-1) * (C - b) mod 26 來還原明文。本實作中也包含了使用擴展歐幾里得演算法來計算乘法反元素的模組。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>時間複雜度</strong>：O(N) (N 為輸入字串的長度。在加密或解密前計算乘法反元素需花費 O(log 26) 的常數時間，隨後必須走訪整個字串對每個字元進行線性運算，因此時間開銷與字串長度成正比)</li>
+            <li><strong>空間複雜度</strong>：O(1) (由於是直接對傳入的字串進行字元替換，屬於 In-place 修改，無需配置與字串長度相關的額外記憶體)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;limits&gt;
+using namespace std;
+
+// 將數字轉換成 0~25 的正餘數
+int mod(int a, int m) {
+    return (a % m + m) % m;
+}
+
+// 擴展歐幾里得演算法
+int extendedGCD(int a, int b, int &amp;x, int &amp;y) {
+
+    // 終止條件
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+
+    int x1, y1;
+
+    // 遞迴呼叫
+    int gcd = extendedGCD(b, a % b, x1, y1);
+
+    // 計算 x 和 y
+    x = y1;
+    y = x1 - (a / b) * y1;
+
+    return gcd;
+}
+
+// 計算乘法反元素
+int modInverse(int a, int m) {
+    int x, y;
+
+    // 使用擴展歐幾里得演算法
+    int gcd = extendedGCD(a, m, x, y);
+
+    // 如果最大公因數不等於 1，則不存在乘法反元素
+    if (gcd != 1) {
+        return -1;
+    }
+
+    // 將結果轉換成正餘數
+    return mod(x, m);
+}
+
+// 仿射密碼函式
+string affineCipher(string text, int a, int b, bool decrypt) {
+
+    int aInverse = 0;
+
+    // 如果是解密，先計算 a 的乘法反元素
+    if (decrypt) {
+        aInverse = modInverse(a, 26);
+    }
+
+    // 逐一處理字串中的字元
+    for (int i = 0; i &lt; text.length(); i++) {
+
+        // 處理大寫英文字母
+        if (text[i] &gt;= 'A' &amp;&amp; text[i] &lt;= 'Z') {
+
+            int p = text[i] - 'A';
+            int c;
+
+            if (decrypt) {
+                // 解密公式：P = a^(-1) * (C - b) mod 26
+                c = mod(aInverse * (p - b), 26);
+            }
+            else {
+                // 加密公式：C = (a * P + b) mod 26
+                c = mod(a * p + b, 26);
+            }
+
+            text[i] = 'A' + c;
+        }
+
+        // 處理小寫英文字母
+        else if (text[i] &gt;= 'a' &amp;&amp; text[i] &lt;= 'z') {
+
+            int p = text[i] - 'a';
+            int c;
+
+            if (decrypt) {
+                c = mod(aInverse * (p - b), 26);
+            }
+            else {
+                c = mod(a * p + b, 26);
+            }
+
+            text[i] = 'a' + c;
+        }
+    }
+
+    return text;
+}
+
+int main() {
+    int choice;
+    int a, b;
+    string text;
+
+    cout &lt;&lt; "===== Affine Cipher =====" &lt;&lt; endl;
+    cout &lt;&lt; "1. Encryption" &lt;&lt; endl;
+    cout &lt;&lt; "2. Decryption" &lt;&lt; endl;
+
+    cout &lt;&lt; "Choose an option: ";
+    cin &gt;&gt; choice;
+
+    // 檢查選項
+    if (choice != 1 &amp;&amp; choice != 2) {
+        cout &lt;&lt; "Invalid option!" &lt;&lt; endl;
+        return 0;
+    }
+
+    cout &lt;&lt; "Enter key a: ";
+    cin &gt;&gt; a;
+
+    cout &lt;&lt; "Enter key b: ";
+    cin &gt;&gt; b;
+
+    // 將密鑰轉換成 0~25
+    a = mod(a, 26);
+    b = mod(b, 26);
+
+    // 檢查 a 是否存在乘法反元素
+    if (modInverse(a, 26) == -1) {
+        cout &lt;&lt; "Error: Key a must be coprime with 26!" &lt;&lt; endl;
+        return 0;
+    }
+
+    // 清除輸入緩衝區
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max(), '\n');
+
+    cout &lt;&lt; "Enter text: ";
+    getline(cin, text);
+
+    // 執行加密或解密
+    if (choice == 1) {
+        cout &lt;&lt; "Encrypted result: "
+             &lt;&lt; affineCipher(text, a, b, false) &lt;&lt; endl;
+    }
+    else {
+        cout &lt;&lt; "Decrypted result: "
+             &lt;&lt; affineCipher(text, a, b, true) &lt;&lt; endl;
+    }
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            ===== Affine Cipher =====<br>
+            1. Encryption<br>
+            2. Decryption<br>
+            Choose an option: 1<br>
+            Enter key a: 5<br>
+            Enter key b: 8<br>
+            Enter text: Hello World!<br>
+            Encrypted result: Rclla Oaplx!
+        </div>
+    </section>
+
+</body>
+</html>

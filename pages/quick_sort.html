@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速排序演算法 (Quick Sort)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>快速排序演算法 (Quick Sort)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>快速排序是一種基於「分治法 (Divide and Conquer)」的高效排序演算法。它的運作原理是從數列中挑選一個元素作為「基準值 (Pivot)」（本實作選用最後一個元素）。接著進行「分割 (Partition)」操作，將所有小於等於基準值的元素移到基準值左邊，大於基準值的元素移到右邊。分割完成後，基準值就會落在其最終排序正確的位置。最後，演算法透過遞迴的方式，分別對基準值左側與右側的子數列重複上述步驟，直到整個數列排序完成。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>最佳時間複雜度</strong>：O(n log n) (當每次分割都能將數列完美對半切分時)</li>
+            <li><strong>平均時間複雜度</strong>：O(n log n) (在一般隨機排列的情況下，效能極佳，實務上常快於其他 O(n log n) 演算法)</li>
+            <li><strong>最壞時間複雜度</strong>：O(n^2) (當數列已經是排序或完全反序狀態，且每次基準值都選到最大或最小值，導致分割極度不平衡時)</li>
+            <li><strong>空間複雜度</strong>：O(log n) (雖然是 In-place 排序，但平均情況下需要 O(log n) 的遞迴呼叫堆疊空間；最壞情況會退化至 O(n))</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+using namespace std;
+
+// 分割函式（Partition）
+int partition(vector&lt;int&gt;&amp; arr, int low, int high) {
+
+    // 選擇最後一個元素作為基準值
+    int pivot = arr[high];
+
+    // 記錄小於或等於基準值的區域邊界
+    int i = low - 1;
+
+    // 將小於或等於基準值的元素移至左側
+    for (int j = low; j &lt; high; j++) {
+
+        if (arr[j] &lt;= pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
+    }
+
+    // 將基準值放到正確的位置
+    swap(arr[i + 1], arr[high]);
+
+    // 回傳基準值的索引
+    return i + 1;
+}
+
+// 快速排序函式
+void quickSort(vector&lt;int&gt;&amp; arr, int low, int high) {
+
+    // 當區域內至少有兩個元素時才進行排序
+    if (low &lt; high) {
+
+        // 找到基準值的正確位置
+        int pivotIndex = partition(arr, low, high);
+
+        // 排序基準值左側的資料
+        quickSort(arr, low, pivotIndex - 1);
+
+        // 排序基準值右側的資料
+        quickSort(arr, pivotIndex + 1, high);
+    }
+}
+
+int main() {
+    int n;
+
+    cout &lt;&lt; "Enter the number of elements: ";
+    cin &gt;&gt; n;
+
+    // 檢查輸入數量
+    if (n &lt;= 0) {
+        cout &lt;&lt; "Number of elements must be greater than 0!" &lt;&lt; endl;
+        return 0;
+    }
+
+    vector&lt;int&gt; arr(n);
+
+    cout &lt;&lt; "Enter " &lt;&lt; n &lt;&lt; " integers: ";
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; arr[i];
+    }
+
+    // 執行快速排序
+    quickSort(arr, 0, n - 1);
+
+    // 輸出排序結果
+    cout &lt;&lt; "Sorted result: ";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i] &lt;&lt; " ";
+    }
+
+    cout &lt;&lt; endl;
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            Enter the number of elements: 6<br>
+            Enter 6 integers: 10 7 8 9 1 5<br>
+            Sorted result: 1 5 7 8 9 10
+        </div>
+    </section>
+
+</body>
+</html>

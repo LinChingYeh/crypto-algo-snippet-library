@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模運算 (Modular Arithmetic)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>模運算 (Modular Arithmetic)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>模運算（Modular Arithmetic）是密碼學中最核心的數學工具，其概念類似於時鐘上的運算。當數值超過模數 m 時，會「繞回」到從 0 開始的範圍內。在 C/C++ 中，直接使用 `%` 運算子對負數取餘數時，結果可能仍為負數，因此實務上會使用 `(a % m + m) % m` 的技巧來確保結果恆為正。模運算具備高度的分配律特性，允許我們在進行加法、減法與乘法時，先對個別運算元取模，再對運算結果取模，這在密碼學處理極大數值（如 RSA 演算法）時，能有效防止變數發生整數溢位 (Integer Overflow)。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>最佳時間複雜度</strong>：O(1) (僅涉及常數次數的基礎算術運算與取餘數操作)</li>
+            <li><strong>平均時間複雜度</strong>：O(1) (時間開銷不隨數字大小呈線性增長，由處理器指令集決定常數時間)</li>
+            <li><strong>最壞時間複雜度</strong>：O(1) (無論正數或負數輸入，運算步驟皆固定不變)</li>
+            <li><strong>空間複雜度</strong>：O(1) (只需常數空間來儲存 a、b、m 及結果變數，無額外記憶體開銷)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+// 將結果轉換成正餘數
+long long mod(long long a, long long m) {
+    return (a % m + m) % m;
+}
+
+int main() {
+    long long a, b, m;
+
+    cout &lt;&lt; "===== Modular Arithmetic =====" &lt;&lt; endl;
+
+    cout &lt;&lt; "Enter integer a: ";
+    cin &gt;&gt; a;
+
+    cout &lt;&lt; "Enter integer b: ";
+    cin &gt;&gt; b;
+
+    cout &lt;&lt; "Enter modulus m: ";
+    cin &gt;&gt; m;
+
+    // 檢查模數
+    if (m &lt;= 0) {
+        cout &lt;&lt; "Error: Modulus must be greater than 0!" &lt;&lt; endl;
+        return 0;
+    }
+
+    // 加法同餘公式
+    long long add = mod(mod(a, m) + mod(b, m), m);
+
+    // 減法同餘公式
+    long long sub = mod(mod(a, m) - mod(b, m), m);
+
+    // 乘法同餘公式
+    long long mul = mod(mod(a, m) * mod(b, m), m);
+
+    // 輸出結果
+    cout &lt;&lt; "\n===== Calculation Results =====" &lt;&lt; endl;
+
+    cout &lt;&lt; "Addition: " &lt;&lt; a &lt;&lt; " + " &lt;&lt; b
+         &lt;&lt; " mod " &lt;&lt; m &lt;&lt; " = " &lt;&lt; add &lt;&lt; endl;
+
+    cout &lt;&lt; "Subtraction: " &lt;&lt; a &lt;&lt; " - " &lt;&lt; b
+         &lt;&lt; " mod " &lt;&lt; m &lt;&lt; " = " &lt;&lt; sub &lt;&lt; endl;
+
+    cout &lt;&lt; "Multiplication: " &lt;&lt; a &lt;&lt; " * " &lt;&lt; b
+         &lt;&lt; " mod " &lt;&lt; m &lt;&lt; " = " &lt;&lt; mul &lt;&lt; endl;
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            ===== Modular Arithmetic =====<br>
+            Enter integer a: 17<br>
+            Enter integer b: 5<br>
+            Enter modulus m: 6<br>
+            <br>
+            ===== Calculation Results =====<br>
+            Addition: 17 + 5 mod 6 = 4<br>
+            Subtraction: 17 - 5 mod 6 = 0<br>
+            Multiplication: 17 * 5 mod 6 = 1
+        </div>
+    </section>
+
+</body>
+</html>

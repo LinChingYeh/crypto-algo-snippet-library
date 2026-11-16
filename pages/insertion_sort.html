@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>插入排序演算法 (Insertion Sort)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>插入排序演算法 (Insertion Sort)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>插入排序的運作原理非常類似於我們打撲克牌時整理手牌的方式。演算法會將整個數列分為「已排序」和「未排序」兩個區域。一開始，會將數列的第一個元素視為已排序區域。接著，每次從未排序區域中取出第一個元素（作為 key），並在已排序的序列中由後往前掃描，將大於 key 的元素逐一往右移動，最後將 key 插入到正確的空位。這個過程會不斷重複，直到所有元素都插入完畢。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>最佳時間複雜度</strong>：O(n) (當數列已經是排序狀態時，內層迴圈每次只需比較一次便會直接中斷)</li>
+            <li><strong>平均時間複雜度</strong>：O(n^2) (一般隨機排列的情況)</li>
+            <li><strong>最壞時間複雜度</strong>：O(n^2) (當數列為完全反序時，每次插入都需要移動已排序區域的所有元素)</li>
+            <li><strong>空間複雜度</strong>：O(1) (為 In-place 排序，只需額外的常數空間儲存 key 等變數)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+using namespace std;
+
+// 插入排序函式
+void insertionSort(vector&lt;int&gt;&amp; arr) {
+    int n = arr.size();
+
+    // 從第二個元素開始排序
+    for (int i = 1; i &lt; n; i++) {
+
+        // 儲存目前要插入的元素
+        int key = arr[i];
+
+        // 從已排序區域的最後一個元素開始比較
+        int j = i - 1;
+
+        // 將大於 key 的元素往右移動
+        while (j &gt;= 0 &amp;&amp; arr[j] &gt; key) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+
+        // 將 key 插入正確的位置
+        arr[j + 1] = key;
+    }
+}
+
+int main() {
+    int n;
+
+    cout &lt;&lt; "Enter the number of elements: ";
+    cin &gt;&gt; n;
+
+    // 檢查輸入數量
+    if (n &lt;= 0) {
+        cout &lt;&lt; "Number of elements must be greater than 0!" &lt;&lt; endl;
+        return 0;
+    }
+
+    vector&lt;int&gt; arr(n);
+
+    cout &lt;&lt; "Enter " &lt;&lt; n &lt;&lt; " integers: ";
+    for (int i = 0; i &lt; n; i++) {
+        cin &gt;&gt; arr[i];
+    }
+
+    // 執行插入排序
+    insertionSort(arr);
+
+    // 輸出排序結果
+    cout &lt;&lt; "Sorted result: ";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; arr[i] &lt;&lt; " ";
+    }
+
+    cout &lt;&lt; endl;
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            Enter the number of elements: 5<br>
+            Enter 5 integers: 12 11 13 5 6<br>
+            Sorted result: 5 6 11 12 13
+        </div>
+    </section>
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自動金鑰密碼 (Autokey Cipher)</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>自動金鑰密碼 (Autokey Cipher)</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>自動金鑰密碼是一種多表替換密碼，由法國密碼學家布萊斯·德·維吉尼亞（Blaise de Vigenère）發明，目的是為了解決傳統維吉尼亞密碼（Vigenère cipher）密鑰重複出現導致容易被頻率分析破解的弱點。它的特點是密鑰由兩部分組成：第一部分是用戶設定的「初始密鑰（Keyword）」，第二部分則是直接將「明文」本身接在初始密鑰之後作為後續的密鑰。因此，密鑰的長度會自動與明文等長，且不會出現規律的週期性重複，大幅提升了加密的安全性。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>時間複雜度</strong>：O(N) (N 為輸入字串的長度。演算法需要走訪整個文字字串，對每個字母進行模運算，處理時間隨字串長度線性增加)</li>
+            <li><strong>空間複雜度</strong>：O(N) (因為需要動態將明文加入 `keyStream` 向量中作為後續的密鑰，所以需要配置與字串長度成正比的額外記憶體空間)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;limits&gt;
+using namespace std;
+
+// 自動密鑰密碼函式
+string autokeyCipher(string text, string keyword, bool decrypt) {
+
+    // 儲存密鑰字母對應的數值
+    vector&lt;int&gt; keyStream;
+
+    // 將初始密鑰轉換成 0~25
+    for (int i = 0; i &lt; keyword.length(); i++) {
+
+        if (keyword[i] &gt;= 'A' &amp;&amp; keyword[i] &lt;= 'Z') {
+            keyStream.push_back(keyword[i] - 'A');
+        }
+        else if (keyword[i] &gt;= 'a' &amp;&amp; keyword[i] &lt;= 'z') {
+            keyStream.push_back(keyword[i] - 'a');
+        }
+    }
+
+    // 記錄目前使用到第幾個密鑰
+    int keyIndex = 0;
+
+    // 逐一處理文字中的字元
+    for (int i = 0; i &lt; text.length(); i++) {
+
+        // 處理大寫英文字母
+        if (text[i] &gt;= 'A' &amp;&amp; text[i] &lt;= 'Z') {
+
+            int p = text[i] - 'A';
+            int k = keyStream[keyIndex];
+            int result;
+
+            if (decrypt) {
+                // 解密公式：P = (C - K) mod 26
+                result = (p - k + 26) % 26;
+            }
+            else {
+                // 加密公式：C = (P + K) mod 26
+                result = (p + k) % 26;
+            }
+
+            // 將運算結果轉回英文字母
+            text[i] = 'A' + result;
+
+            // 將明文加入後續密鑰
+            keyStream.push_back(decrypt ? result : p);
+
+            keyIndex++;
+        }
+
+        // 處理小寫英文字母
+        else if (text[i] &gt;= 'a' &amp;&amp; text[i] &lt;= 'z') {
+
+            int p = text[i] - 'a';
+            int k = keyStream[keyIndex];
+            int result;
+
+            if (decrypt) {
+                // 解密公式：P = (C - K) mod 26
+                result = (p - k + 26) % 26;
+            }
+            else {
+                // 加密公式：C = (P + K) mod 26
+                result = (p + k) % 26;
+            }
+
+            // 將運算結果轉回英文字母
+            text[i] = 'a' + result;
+
+            // 將明文加入後續密鑰
+            keyStream.push_back(decrypt ? result : p);
+
+            keyIndex++;
+        }
+    }
+
+    return text;
+}
+
+int main() {
+    int choice;
+    string keyword;
+    string text;
+
+    cout &lt;&lt; "===== Autokey Cipher =====" &lt;&lt; endl;
+    cout &lt;&lt; "1. Encryption" &lt;&lt; endl;
+    cout &lt;&lt; "2. Decryption" &lt;&lt; endl;
+
+    cout &lt;&lt; "Choose an option: ";
+    cin &gt;&gt; choice;
+
+    // 檢查選項
+    if (choice != 1 &amp;&amp; choice != 2) {
+        cout &lt;&lt; "Invalid option!" &lt;&lt; endl;
+        return 0;
+    }
+
+    // 清除輸入緩衝區
+    cin.ignore(numeric_limits&lt;streamsize&gt;::max(), '\n');
+
+    cout &lt;&lt; "Enter Keyword: ";
+    getline(cin, keyword);
+
+    // 檢查密鑰是否至少包含一個英文字母
+    bool validKey = false;
+
+    for (int i = 0; i &lt; keyword.length(); i++) {
+        if ((keyword[i] &gt;= 'A' &amp;&amp; keyword[i] &lt;= 'Z') ||
+            (keyword[i] &gt;= 'a' &amp;&amp; keyword[i] &lt;= 'z')) {
+            validKey = true;
+            break;
+        }
+    }
+
+    if (!validKey) {
+        cout &lt;&lt; "Error: Keyword must contain at least one letter!" &lt;&lt; endl;
+        return 0;
+    }
+
+    cout &lt;&lt; "Enter text: ";
+    getline(cin, text);
+
+    // 執行加密或解密
+    if (choice == 1) {
+        cout &lt;&lt; "Encrypted result: "
+             &lt;&lt; autokeyCipher(text, keyword, false) &lt;&lt; endl;
+    }
+    else {
+        cout &lt;&lt; "Decrypted result: "
+             &lt;&lt; autokeyCipher(text, keyword, true) &lt;&lt; endl;
+    }
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            ===== Autokey Cipher =====<br>
+            1. Encryption<br>
+            2. Decryption<br>
+            Choose an option: 1<br>
+            Enter Keyword: KEY<br>
+            Enter text: Hello World!<br>
+            Encrypted result: Ripoq Asbpn!
+        </div>
+    </section>
+
+</body>
+</html>

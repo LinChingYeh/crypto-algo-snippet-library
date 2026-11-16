@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GF(2^n) 運算 (Galois Field GF(2^n))</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <a href="../index.html" style="display: inline-block; margin-bottom: 20px;">🔙 返回目錄</a>
+
+    <h1>GF(2^n) 運算 (Galois Field GF(2^n))</h1>
+
+    <section>
+        <h2>原理簡介</h2>
+        <p>伽羅瓦體 GF(2^n) 是一種有限體，在密碼學（特別是 AES 加密演算法與錯誤更正碼）中有著廣泛的應用。在 GF(2^n) 中，元素可以表示為次數小於 n 的多項式，其係數為 0 或 1。在這個空間裡，加法與減法運算等同於位元互斥或 (XOR) 運算。而乘法運算則是將兩個多項式相乘後，再對一個特定的 n 次「不可約多項式 (Irreducible Polynomial)」取餘式（Modulo），這確保了乘法運算的結果仍然封閉於該有限體中。此外，除了 0 之外的每一個元素，都存在唯一的乘法反元素，本實作中是利用費馬小定理推廣的 a^(2^n - 2) 來求解。</p>
+    </section>
+
+    <section>
+        <h2>複雜度與效能分析</h2>
+        <ul>
+            <li><strong>最佳時間複雜度</strong>：O(1) (加法與減法運算僅需單一 CPU 指令 XOR 即可完成)</li>
+            <li><strong>平均時間複雜度</strong>：O(n^2) (多項式乘法與取餘數的過程，需針對位元逐一進行移位與 XOR 運算，時間花費取決於 n 的位元長度；計算乘法反元素時使用平方-乘法法則，時間也落在 O(n^2) 等級)</li>
+            <li><strong>最壞時間複雜度</strong>：O(n^2) (與平均情況相同，無進位乘法需執行 n 次位元檢查與運算)</li>
+            <li><strong>空間複雜度</strong>：O(1) (除了儲存常數個 uint64_t 整數變數外，不需額外動態配置記憶體)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>核心程式碼</h2>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+#include &lt;cstdint&gt;
+using namespace std;
+
+// 回傳多項式的次數；零多項式回傳 -1
+int polynomialDegree(uint64_t p) {
+    if (p == 0) return -1;
+
+    int degree = -1;
+
+    while (p != 0) {
+        p &gt;&gt;= 1;
+        ++degree;
+    }
+
+    return degree;
+}
+
+// 多項式長除法：回傳 dividend 除以 divisor 的餘式
+uint64_t polynomialRemainder(uint64_t dividend, uint64_t divisor) {
+    if (divisor == 0) return dividend;
+
+    int divisorDegree = polynomialDegree(divisor);
+
+    while (dividend != 0 &amp;&amp;
+           polynomialDegree(dividend) &gt;= divisorDegree) {
+
+        int shift = polynomialDegree(dividend) - divisorDegree;
+
+        // GF(2) 的減法等於 XOR
+        dividend ^= (divisor &lt;&lt; shift);
+    }
+
+    return dividend;
+}
+
+// 計算兩個二元多項式的最大公因式
+uint64_t polynomialGCD(uint64_t a, uint64_t b) {
+    while (b != 0) {
+        uint64_t remainder = polynomialRemainder(a, b);
+
+        a = b;
+        b = remainder;
+    }
+
+    return a;
+}
+
+// GF(2^n) 加法：XOR
+uint64_t gfAdd(uint64_t a, uint64_t b) {
+    return a ^ b;
+}
+
+// GF(2^n) 減法：與加法相同，使用 XOR
+uint64_t gfSubtract(uint64_t a, uint64_t b) {
+    return a ^ b;
+}
+
+// GF(2^n) 乘法
+// 使用無進位多項式乘法，再對不可約多項式取餘數
+uint64_t gfMultiply(uint64_t a, uint64_t b,
+                    unsigned int n, uint64_t irreduciblePoly) {
+
+    uint64_t result = 0;
+
+    const uint64_t highBit = (1ULL &lt;&lt; n);
+    const uint64_t mask = highBit - 1;
+
+    while (b != 0) {
+
+        // 若 b 的最低位為 1，將 a XOR 進結果
+        if (b &amp; 1ULL) {
+            result ^= a;
+        }
+
+        b &gt;&gt;= 1;
+        a &lt;&lt;= 1;
+
+        // 若出現 x^n 項，使用不可約多項式進行約簡
+        if (a &amp; highBit) {
+            a ^= irreduciblePoly;
+        }
+    }
+
+    return result &amp; mask;
+}
+
+// GF(2^n) 次方運算：平方-乘法法則
+uint64_t gfPower(uint64_t base, uint64_t exponent,
+                 unsigned int n, uint64_t irreduciblePoly) {
+
+    uint64_t result = 1;
+
+    while (exponent &gt; 0) {
+
+        if (exponent &amp; 1ULL) {
+            result = gfMultiply(result, base, n, irreduciblePoly);
+        }
+
+        base = gfMultiply(base, base, n, irreduciblePoly);
+        exponent &gt;&gt;= 1;
+    }
+
+    return result;
+}
+
+// 使用 Rabin 判別法，檢查多項式是否不可約
+bool isIrreducible(uint64_t f, unsigned int n) {
+
+    if (polynomialDegree(f) != static_cast&lt;int&gt;(n)) {
+        return false;
+    }
+
+    // 計算 x mod f
+    const uint64_t x = polynomialRemainder(2, f);
+
+    // 檢查 x^(2^n) = x (mod f)
+    uint64_t power = x;
+
+    for (unsigned int i = 0; i &lt; n; ++i) {
+        power = gfMultiply(power, power, n, f);
+    }
+
+    if (power != x) {
+        return false;
+    }
+
+    // 找出 n 的所有不同質因數
+    unsigned int remaining = n;
+
+    for (unsigned int p = 2; p * p &lt;= remaining; ++p) {
+
+        if (remaining % p == 0) {
+
+            power = x;
+
+            for (unsigned int i = 0; i &lt; n / p; ++i) {
+                power = gfMultiply(power, power, n, f);
+            }
+
+            // 檢查 gcd(x^(2^(n/p)) - x, f) = 1
+            // GF(2) 中減法等於 XOR
+            if (polynomialGCD(f, power ^ x) != 1) {
+                return false;
+            }
+
+            while (remaining % p == 0) {
+                remaining /= p;
+            }
+        }
+    }
+
+    // 處理剩餘的質因數
+    if (remaining &gt; 1) {
+
+        unsigned int p = remaining;
+        power = x;
+
+        for (unsigned int i = 0; i &lt; n / p; ++i) {
+            power = gfMultiply(power, power, n, f);
+        }
+
+        if (polynomialGCD(f, power ^ x) != 1) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// 計算乘法反元素
+// 非零元素 a 的反元素為 a^(2^n - 2)
+bool gfInverse(uint64_t a, uint64_t &amp;inverse,
+               unsigned int n, uint64_t irreduciblePoly) {
+
+    if (a == 0) {
+        return false;
+    }
+
+    uint64_t exponent = (1ULL &lt;&lt; n) - 2;
+
+    inverse = gfPower(a, exponent, n, irreduciblePoly);
+
+    return true;
+}
+
+// 以十六進位格式輸出結果
+void printHex(const char* label, uint64_t value) {
+
+    cout &lt;&lt; label
+         &lt;&lt; "0x"
+         &lt;&lt; uppercase &lt;&lt; hex &lt;&lt; value
+         &lt;&lt; nouppercase &lt;&lt; dec &lt;&lt; '\n';
+}
+
+int main() {
+
+    int nInput;
+
+    uint64_t irreduciblePoly;
+    uint64_t a, b;
+
+    // 輸入 n
+    cout &lt;&lt; "Enter n (support 1 to 32): ";
+
+    if (!(cin &gt;&gt; nInput) || nInput &lt; 1 || nInput &gt; 32) {
+        cout &lt;&lt; "Error: n must be between 1 and 32.\n";
+        return 1;
+    }
+
+    unsigned int n = static_cast&lt;unsigned int&gt;(nInput);
+
+    // 輸入不可約多項式
+    cout &lt;&lt; "Enter an n-degree irreducible polynomial "
+         &lt;&lt; "(in hex, must include x^n term, e.g., 0x11B): ";
+
+    if (!(cin &gt;&gt; hex &gt;&gt; irreduciblePoly)) {
+        cout &lt;&lt; "Error: Invalid polynomial input format.\n";
+        return 1;
+    }
+
+    // 檢查多項式次數
+    if (polynomialDegree(irreduciblePoly) != static_cast&lt;int&gt;(n)) {
+        cout &lt;&lt; "Error: The highest degree of the polynomial must equal n.\n";
+        return 1;
+    }
+
+    // 檢查不可約性
+    if (!isIrreducible(irreduciblePoly, n)) {
+        cout &lt;&lt; "Error: The entered polynomial is not irreducible, "
+             &lt;&lt; "cannot define the GF(2^n) finite field.\n";
+        return 1;
+    }
+
+    // 輸入兩個有限體元素
+    cout &lt;&lt; "Enter elements A and B "
+         &lt;&lt; "(in hex, e.g., 0x57 0x83): ";
+
+    if (!(cin &gt;&gt; hex &gt;&gt; a &gt;&gt; b)) {
+        cout &lt;&lt; "Error: Invalid element input format.\n";
+        return 1;
+    }
+
+    // 限制元素必須在 n 位元範圍內
+    const uint64_t mask = (1ULL &lt;&lt; n) - 1;
+
+    if (a &gt; mask || b &gt; mask) {
+        cout &lt;&lt; "Error: A and B must be n-bit elements.\n";
+        return 1;
+    }
+
+    // 顯示基本資料
+    cout &lt;&lt; "\n========== GF(2^" &lt;&lt; n &lt;&lt; ") Operation Results ==========\n";
+
+    printHex("Irreducible Polynomial = ", irreduciblePoly);
+    printHex("A = ", a);
+    printHex("B = ", b);
+
+    // 加法
+    printHex("A + B = ", gfAdd(a, b));
+
+    // 減法
+    printHex("A - B = ", gfSubtract(a, b));
+
+    // 乘法
+    printHex("A * B = ", gfMultiply(a, b, n, irreduciblePoly));
+
+    uint64_t inverse;
+
+    // A 的乘法反元素
+    if (gfInverse(a, inverse, n, irreduciblePoly)) {
+        printHex("Multiplicative Inverse of A = ", inverse);
+    }
+    else {
+        cout &lt;&lt; "A = 0, no multiplicative inverse.\n";
+    }
+
+    // B 的乘法反元素與除法
+    if (gfInverse(b, inverse, n, irreduciblePoly)) {
+
+        printHex("Multiplicative Inverse of B = ", inverse);
+
+        printHex("A / B = ",
+                 gfMultiply(a, inverse, n, irreduciblePoly));
+    }
+    else {
+        cout &lt;&lt; "B = 0, no multiplicative inverse, thus A / B is undefined.\n";
+    }
+
+    return 0;
+}</code></pre>
+    </section>
+
+    <section>
+        <h2>測試輸出結果</h2>
+        <div class="output">
+            Enter n (support 1 to 32): 8<br>
+            Enter an n-degree irreducible polynomial (in hex, must include x^n term, e.g., 0x11B): 0x11B<br>
+            Enter elements A and B (in hex, e.g., 0x57 0x83): 0x57 0x83<br>
+            <br>
+            ========== GF(2^8) Operation Results ==========<br>
+            Irreducible Polynomial = 0x11B<br>
+            A = 0x57<br>
+            B = 0x83<br>
+            A + B = 0xD4<br>
+            A - B = 0xD4<br>
+            A * B = 0xC1<br>
+            Multiplicative Inverse of A = 0x8F<br>
+            Multiplicative Inverse of B = 0xEB<br>
+            A / B = 0x93
+        </div>
+    </section>
+
+</body>
+</html>
